@@ -61,6 +61,10 @@ package object jmxcli {
   class CommandBuilder {
     private[jmxcli] val cmds: mutable.Map[String, Seq[Command]] = mutable.Map.empty
 
+    def addCommand(beanname: String): CommandBuilder = {
+      addCommand(beanname, "", None)
+    }
+
     def addCommand(beanname: String, cmd: String): CommandBuilder = {
       addCommand(beanname, cmd, None)
     }
@@ -85,6 +89,8 @@ package object jmxcli {
         addCommand(tok(0), tok(1), tok(2))
       else if (tok.length == 2)
         addCommand(tok(0), tok(1))
+      else if (tok.length == 1)
+        addCommand(tok(0))
       this
     }
   }

@@ -162,7 +162,7 @@ class JmxClient(hostport: String, login:Option[String], password: Option[String]
   }
 
   private def doBean(mbsc: MBeanServerConnection, instance: ObjectInstance, commands: Seq[Command]): Seq[CommandResult] = {
-    if (commands.isEmpty) {
+    if (commands.isEmpty || commands.exists(_.cmd == "")) {
       Seq(listOptions(mbsc, instance))
     }
     else {
