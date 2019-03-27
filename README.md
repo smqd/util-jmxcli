@@ -70,7 +70,7 @@ java.lang:type=Memory  Operation  gc() : void
 
 ### Retrieve an attribute
 
-The value of `-b` can consist of three parts `bean-name`/`attribute-name`/`alias`" that are separated by `/`.
+The value of `-b` can consist of three parts `bean-name`/`attribute-name`/`alias` that are separated by `/`.
 - `bean-name` is mandatory, it specify the target MXBean
 - `attribute-name` is optional; if it is not specified JmxClient retrieves all attributes and operations of the MXBean
 - `alias` is (optional) alias of the attribute name; this is usefull when you use JmxClient with `grep` in shell script 
