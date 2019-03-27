@@ -44,11 +44,18 @@ class JmxClientTest extends FlatSpec with BeforeAndAfterAll {
     val builder = CommandBuilder.newBuilder
       .addCommand("java.lang:type=Memory", "HeapMemoryUsage", "heap")
       .addCommand("java.lang:type=MemoryPool,name=PS Old Gen", "Usage", "old")
+      .addCommand("java.lang:type=MemoryPool,name=PS Old Gen", "PeakUsage", "old.peak")
       .addCommand("java.lang:type=MemoryPool,name=PS Eden Space", "Usage", "eden")
       .addCommand("java.lang:type=MemoryPool,name=PS Survivor Space", "Usage", "survivor")
       .addCommand("java.lang:type=Threading", "ThreadCount", "thread.count")
       .addCommand("java.lang:type=OperatingSystem", "OpenFileDescriptorCount", "fd.count")
 
+    jmx.execute(builder)
+  }
+
+  it should "work with command arguments" in {
+    val builder = CommandBuilder.newBuilder
+        .addCommandFromString("java.lang:type=Memory/HeapMemoryUsage/mem")
     jmx.execute(builder)
   }
 }

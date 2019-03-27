@@ -64,6 +64,15 @@ package object jmxcli {
       }
       this
     }
+
+    def addCommandFromString(str: String): CommandBuilder = {
+      val tok = str.split('/')
+      if (tok.length == 3)
+        addCommand(tok(0), tok(1), tok(2))
+      else if (tok.length == 2)
+        addCommand(tok(0), tok(1))
+      this
+    }
   }
 
   private[jmxcli] case class Command(cmd: String, alias: Option[String]) {

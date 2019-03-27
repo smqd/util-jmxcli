@@ -10,31 +10,42 @@ import scala.language.implicitConversions
 
 object JmxClient extends App {
 
-  val beanname: String = "java.lang:name=PS Old Gen,type=MemoryPool"
-  val commands: Seq[String] = Seq("Usage", "UsageThreshold", "PeakUsage")
-
   case class Config(host: String = "localhost",
                     port: Int = 9010,
                     login: Option[String] = None,
-                    password: Option[String] = None)
+                    password: Option[String] = None,
+                    builder: CommandBuilder = CommandBuilder.newBuilder)
 
   val builder = OParser.builder[Config]
   val parser = {
     import builder._
     OParser.sequence(
-      programName("java -jar JmxClient-<version>.jar"),
+      programName(s"java -jar ${Versions.jmxJarName}"),
       head(""),
-      opt[String]('h', "host").valueName("<host>").action( (x,c) => c.copy(host = x)).text("(default localhost)"),
-      opt[Int]('p', "port").valueName("<port>").action( (x,c) => c.copy(port = x)).text("(default 9011)"),
-      opt[String]('u', "user").valueName("<username>").action( (x,c) => c.copy(login = Some(x))).text("jmx authentication user"),
-      opt[String]('P', "password").valueName("<password>").action( (x,c) => c.copy(password = Some(x))).text("jmx authentication credential")
+      version(Versions.jmxClientVersion),
+      help("help").text("print this messages"),
+      opt[String]('h', "host").valueName("<host>").action( (x,c) => c.copy(host = x))
+        .text("(default localhost)"),
+      opt[Int]('p', "port").valueName("<port>").action( (x,c) => c.copy(port = x))
+        .text("(default 9010)"),
+      opt[String]('u', "user").valueName("<username>").action( (x,c) => c.copy(login = Some(x)))
+        .text("jmx authentication user"),
+      opt[String]('P', "password").valueName("<phrase>").action( (x,c) => c.copy(password = Some(x))).
+        text("jmx authentication credential"),
+      opt[String]('b', "bean").valueName("<bean/cmd[/alias]>").unbounded().action{ (x,c) => c.builder.addCommandFromString(x); c }
+        .text("-b <b1/c1/a1> -b <b2/c2/a2> -b <b3/c3> ..."),
+      note(
+        """
+          | Ex) -b java.lang:type=Memory/HeapMemoryUsage/mem
+          | Ex) -b "java.lang:type=MemoryPool,name=PS Old Gen/PeakUsage/peak" -b java.lang:type=Threading/ThreadCount
+        """.stripMargin)
     )
   }
 
   OParser.parse(parser, args, Config()) match {
     case Some(config) =>
       val client = new JmxClient(s"${config.host}:${config.port}", config.login, config.password)
-      client.execute(beanname, commands:_*)
+      client.execute(config.builder)
     case _ =>
   }
 
@@ -59,8 +70,15 @@ class JmxClient(hostport: String, login:Option[String], password: Option[String]
   def execute(builder: CommandBuilder): Unit = {
     val jmxc = jmxConnector(hostport, login, password)
     try {
-      builder.cmds.foreach{ case(beanname, commands) =>
-        doBeans(jmxc.getMBeanServerConnection, beanname.asObjectName, commands)
+      val cmds = builder.cmds
+
+      if (cmds.isEmpty) {
+        doBeans(jmxc.getMBeanServerConnection, null, Seq.empty)
+      }
+      else {
+        cmds.foreach{ case(beanname, commands) =>
+          doBeans(jmxc.getMBeanServerConnection, beanname.asObjectName, commands)
+        }
       }
     }
     finally {

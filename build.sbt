@@ -1,6 +1,10 @@
+
+val versionString = "0.1"
+val jarNameString = s"JmxClient-$versionString.jar"
+
 name := "JmxClient"
 
-version := "0.1"
+version := versionString
 
 scalaVersion := "2.12.8"
 
@@ -12,6 +16,21 @@ enablePlugins(LauncherJarPlugin)
 
 mainClass in assembly := Some("com.thing2x.jmxcli.JmxClient")
 
-assemblyJarName in assembly := s"JmxClient-${version.value}.jar"
+assemblyJarName in assembly := jarNameString
 
 test in assembly := {}
+
+sourceGenerators in Compile += Def.task {
+  val file = (sourceDirectory in Compile).value / "scala/com/thing2x/jmxcli/Versions.scala"
+  IO.write(file,
+    s"""
+       |package com.thing2x.jmxcli
+       |
+       |object Versions {
+       |   val jmxClientVersion = "$versionString"
+       |   val jmxJarName = "$jarNameString"
+       |}
+    """.stripMargin
+  )
+  Seq(file)
+}.taskValue
