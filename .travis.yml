@@ -19,6 +19,8 @@ deploy:
   file: target/scala-2.12/JmxClient-${TRAVIS_TAG}.jar
   on:
     repo: smqd/util-jmxcli
+    branch: develop
+    tags: on
 branches:
   only:
-  - master
+  - develop
