@@ -1,0 +1,24 @@
+sudo: false
+language: scala
+jdk: oraclejdk8
+scala:
+- 2.12.8
+cache:
+  directories:
+  - "$HOME/.ivy2/cache"
+  - "$HOME/.sbt"
+before_cache:
+- find $HOME/.ivy2/cache -name "ivydata-*.properties" -print -delete
+- find $HOME/.sbt -name "*.lock" -print -delete
+script:
+- sbt ++$TRAVIS_SCALA_VERSION assembly
+deploy:
+  provider: releases
+  api_key:
+    secure: Jy3/3zeSiOja0f205+I/49vMZmfAQuGA0zVzpR/kBhTWb+3/aF3OipZmFe6AJi29ONMfEBZNz2wGXN9Gkm8I82/InTLK95B3hJ71h+eWT6r7rgwKLTVcEOyfqLMW54gU4QbLV50TA2jNhtaq3BEAQgnxDsrYMS3KolEf0Szlp3OPiwzOCDIFHe1FvBjXQlWkHV6mB4228NOLOkXykisQLMnEB0KwU2eZ1thqozIT4Ssk76AFPSV35/wRuoI+SlKT1eotFhEfUEwY/TaIO62P/Vg+zfd2+kStXKoadsbZy6EsWa3N4MdZt65opiNKSYHP/NBT9uxOV9/M4OGgw52+MB+FeJbv8M9BpRHbDftU4I8mVD8/MMIb4ZvTaK3VaSNbJsoiR2JSH3CGUq2wqnjBrI5LhcXOKT/+hcCaLL/l5qkPs8+afyH6wjVyvb/6Q6hlET3gV4SFOZCuYg/6Bh2HWW7KTdMrVguAYV0O1GSIwbdaVXi8w1neeXz9qGoYPCqgSwhDezR0u7b48WpuE8323DIaEMZC9Gkc9BXvflgicTL5rQ5pVdosP6D4m7YgihVHRE3hod8Z65mGMFkL8n4g9nnHWRQvi2JZQDVqpdlVXYiP2biOFkTyLnNaq45rOpD94S9nA/zklXUYBt9jEwPg20fzUxpm7fgPoz+3KDHW+Kw=
+  file: target/scala-2.12/JmxClient-${TRAVIS_TAG}.jar
+  on:
+    repo: smqd/util-jmxcli
+branches:
+  only:
+  - master

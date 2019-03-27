@@ -30,6 +30,15 @@ headerMappings := headerMappings.value + (HeaderFileType.scala -> HeaderCommentS
 
 headerMappings := headerMappings.value + (HeaderFileType.conf -> HeaderCommentStyle.hashLineComment)
 
+fork in run := true
+
+javaOptions in Test ++= Seq(
+  "-Dcom.sun.management.jmxremote",
+  "-Dcom.sun.management.jmxremote.port=9011",
+  "-Dcom.sun.management.jmxremote.local.only=false",
+  "-Dcom.sun.management.jmxremote.authenticate=false",
+  "-Dcom.sun.management.jmxremote.ssl=false",
+)
 
 sourceGenerators in Compile += Def.task {
   val file = (sourceDirectory in Compile).value / "scala/com/thing2x/jmxcli/Versions.scala"
