@@ -3,24 +3,44 @@ package com.thing2x.jmxcli
 import javax.management._
 import javax.management.openmbean.{CompositeData, TabularData}
 import javax.management.remote.{JMXConnector, JMXConnectorFactory, JMXServiceURL}
+import scopt.OParser
 
 import scala.collection.JavaConverters._
 import scala.language.implicitConversions
 
 object JmxClient extends App {
 
-  val hostport: String = "localhost:9011"
-  val login: String = null
-  val password: String = null
   val beanname: String = "java.lang:name=PS Old Gen,type=MemoryPool"
   val commands: Seq[String] = Seq("Usage", "UsageThreshold", "PeakUsage")
 
-  val client = new JmxClient(hostport, login, password)
+  case class Config(host: String = "localhost",
+                    port: Int = 9010,
+                    login: Option[String] = None,
+                    password: Option[String] = None)
 
-  client.execute(beanname, commands:_*)
+  val builder = OParser.builder[Config]
+  val parser = {
+    import builder._
+    OParser.sequence(
+      programName("java -jar JmxClient-<version>.jar"),
+      head(""),
+      opt[String]('h', "host").valueName("<host>").action( (x,c) => c.copy(host = x)).text("(default localhost)"),
+      opt[Int]('p', "port").valueName("<port>").action( (x,c) => c.copy(port = x)).text("(default 9011)"),
+      opt[String]('u', "user").valueName("<username>").action( (x,c) => c.copy(login = Some(x))).text("jmx authentication user"),
+      opt[String]('P', "password").valueName("<password>").action( (x,c) => c.copy(password = Some(x))).text("jmx authentication credential")
+    )
+  }
+
+  OParser.parse(parser, args, Config()) match {
+    case Some(config) =>
+      val client = new JmxClient(s"${config.host}:${config.port}", config.login, config.password)
+      client.execute(beanname, commands:_*)
+    case _ =>
+  }
+
 }
 
-class JmxClient(hostport: String, login:String, password: String) {
+class JmxClient(hostport: String, login:Option[String], password: Option[String]) {
 
   def execute(): Unit = {
     execute(null, Seq.empty[String]:_*)
@@ -254,9 +274,9 @@ class JmxClient(hostport: String, login:String, password: String) {
     infos.find(i => i.getName.equals(name))
   }
 
-  private def jmxConnector(hostport: String, login: String, password: String): JMXConnector = {
+  private def jmxConnector(hostport: String, login: Option[String], password: Option[String]): JMXConnector = {
     val rmiurl = new JMXServiceURL(s"service:jmx:rmi://$hostport/jndi/rmi://$hostport/jmxrmi")
-    val cred = Map(JMXConnector.CREDENTIALS -> Array(login, password))
+    val cred = Map(JMXConnector.CREDENTIALS -> Array(login.getOrElse(null), password.getOrElse(null)))
     JMXConnectorFactory.connect(rmiurl, cred.asJava)
   }
 }
