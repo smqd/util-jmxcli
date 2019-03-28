@@ -82,7 +82,8 @@ A command consist of three parts `bean-name`/`feature`/`param` that are separate
 - `bean-name` is mandatory, it specify the target MXBean
 - `feature` optional, specify attribute or operation
        if feature is attribute name, it will retrieve the value of the attribute
-          param is used as alias instead of the real attribute name
+          param is used as alias for printing instead of the real attribute name
+          if alias is '-', no prefix and name is appended, print value only without name
        if feature is operation name, it will invoke the operation
           param is comma-separated list of arguments for the operation
        if feature is not specified, JmxClient will display all attributes and operations   
@@ -98,6 +99,13 @@ java.lang:name=PS Old Gen,type=MemoryPool PeakUsage
     peak.init: 179306496
 ```
 
+print value only without "name:" prefix
+
+```bash
+$ java -jar JmxClient-vX.Y.Z.jar -h localhost -p 9010 "java.lang:type=OperatingSystem/ProcessCpuLoad/-"
+java.lang:type=OperatingSystem ProcessCpuLoad
+    0.00
+```
 ### Retrieve multiple attributes
 
 Use multiple commands

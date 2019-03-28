@@ -55,6 +55,7 @@ object JmxClient extends App {
           |    - feature   : optional, specify attribute or operation
           |                  if feature is attribute name, it will retrieve the value of the attribute
           |                     param is used as alias instead of the real attribute name
+          |                     if alias is '-', no prefix and name is appended
           |                  if feature is operation name, it will invoke the operation
           |                     param is comma-separated list of arguments for the operation
           |                  if feature is not specified, JmxClient will display all attributes and operations
@@ -138,6 +139,13 @@ class JmxClient(hostport: String, login:Option[String], password: Option[String]
     else {
       val result = beans.flatMap( doBean(mbsc, _, commands) ).toSeq.groupBy(_.instance)
 
+      def printSimple(header: String, name: String, value: String): Unit = {
+        if (name.length == 0)
+          println(s"$header\n    $value")
+        else
+          println(s"$header\n    $name: $value")
+      }
+
       result.foreach { case (oi, r) =>
         r.groupBy(_.cmd).foreach { case (cmd, rset) =>
           val header = s"${oi.getObjectName.getCanonicalName} ${cmd.cmd}"
@@ -152,35 +160,48 @@ class JmxClient(hostport: String, login:Option[String], password: Option[String]
               println(s"$header Attribute  ${at.getName} : ${at.getType}")
             case op: MBeanOperationInfo =>
               println(s"$header Operation  ${op.getName}(${op.getSignature.map(p => s"${p.getName}:${p.getType}").mkString(", ")}) : ${op.getReturnType}")
+            case n: java.lang.Double =>
+              printSimple(header, cmd.displayName, f"${n.doubleValue}%.2f")
+            case n: java.lang.Float =>
+              printSimple(header, cmd.displayName, f"${n.floatValue}%.2f")
             case n =>
-              println(s"$header\n    ${cmd.displayName}: $n")
+              printSimple(header, cmd.displayName, n.toString)
           }
         }
       }
     }
 
     def resultCompositeData(indent: String, name: String, data: CompositeData): String = {
+      val prefix = if(name.length > 0) s"$name." else ""
       data.getCompositeType.keySet.asScala.map{ k =>
         data.get(k) match {
           case v: CompositeData =>
-            resultCompositeData(indent+"    ", s"$name.$k", v)
+            resultCompositeData(indent+"    ", s"$prefix$k", v)
           case v: TabularData =>
-            resultTabularData(indent+"    ", s"$name.$k", v)
+            resultTabularData(indent+"    ", s"$prefix$k", v)
           case v =>
-            s"$indent$name.$k: ${v.toString}"
+            if (prefix.length == 0)
+              s"$indent${v.toString}"
+            else
+              s"$indent$prefix$k: ${v.toString}"
         }
       }.mkString(s"$indent    ", s"\n$indent    ", "")
     }
 
     def resultTabularData(indent: String, name: String, data: TabularData): String = {
+      val prefix = if(name.length > 0) s"$name." else ""
       data.values().asScala.map {
+        case v: CompositeData if v.containsKey("key") && v.containsKey("value") =>
+          val key = v.get("key")
+          val value = v.get("value")
+          s"$indent$prefix$key: ${value.toString.replace("\n", "\\n")}"
         case v: CompositeData =>
           resultCompositeData(indent+"    ", "", v)
         case v: TabularData =>
           resultTabularData(indent+"    ", "", v)
         case v =>
           s"$indent${v.toString}"
-      }.mkString(s"$indent    ", s"\n$indent", "")
+      }.mkString(s"$indent    ", s"\n$indent    ", "")
     }
   }
 

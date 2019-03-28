@@ -100,7 +100,15 @@ package object jmxcli {
   }
 
   private[jmxcli] case class Command(cmd: String, alias: Option[String]) {
-    def displayName: String = if(alias.isDefined) alias.get else cmd
+    def displayName: String = if(alias.isDefined){
+      alias.get match {
+        case "-" => ""
+        case s => s
+      }
+    }
+    else{
+      cmd
+    }
   }
 
   private[jmxcli] object Command {
