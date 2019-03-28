@@ -24,8 +24,8 @@ import scala.language.implicitConversions
 
 object JmxClient extends App {
 
-  case class Config(host: String = "localhost",
-                    port: Int = 9010,
+  case class Config(hostPort: String = "localhost:9010",
+                    registryHostPort: Option[String] = None,
                     verbose: Boolean = false,
                     login: Option[String] = None,
                     password: Option[String] = None,
@@ -40,17 +40,18 @@ object JmxClient extends App {
       help("help").text("print this messages"),
       version("version").text("print current version"),
       opt[Unit]('v', "verbose").action( (_, c) => c.copy(verbose = true)),
-      opt[String]('h', "host").required().valueName("<host>").action( (x,c) => c.copy(host = x)),
-      opt[Int]('p', "port").required().valueName("<port>").action( (x,c) => c.copy(port = x)),
+      opt[String]('s', "server").required().valueName("host:port").action( (x,c) => c.copy(hostPort = x))
+        .text("jmx server"),
+      opt[String]('r', "rmi").valueName("host:port").action( (x,c) => c.copy(registryHostPort = Some(x)))
+        .text("rmi registry"),
       opt[String]('u', "user").valueName("<username>").action( (x,c) => c.copy(login = Some(x)))
         .text("jmx authentication user"),
-      opt[String]('P', "password").valueName("<phrase>").action( (x,c) => c.copy(password = Some(x))).
+      opt[String]('p', "password").valueName("<phrase>").action( (x,c) => c.copy(password = Some(x))).
         text("jmx authentication credential"),
-      arg[String]("<commands> ...").unbounded().optional().action{ (x,c) => c.builder.addCommandFromString(x); c }
+      arg[String]("commands ...").unbounded().optional().action{ (x,c) => c.builder.addCommandFromString(x); c }
         .text("<b1/f1/p1> <b2/f2/p2> <b3/f3> ..."),
       note(
-        """
-          |    A command is consist of three parts as bean-name/feature/param that are separated by /.
+        """    A command is consist of three parts as bean-name/feature/param that are separated by /.
           |    - bean-name : mandatory, it specify the target MXBean by name
           |    - feature   : optional, specify attribute or operation
           |                  if feature is attribute name, it will retrieve the value of the attribute
@@ -60,6 +61,7 @@ object JmxClient extends App {
           |                     param is comma-separated list of arguments for the operation
           |                  if feature is not specified, JmxClient will display all attributes and operations
           |    - param     : optional, it works differently depends on the feature
+          |
           |    ex)
           |      . retrieve thread count
           |        java.lang:type=Threading/ThreadCount
@@ -78,21 +80,21 @@ object JmxClient extends App {
 
   OParser.parse(parser, args, Config()) match {
     case Some(config) =>
-      val client = new JmxClient(s"${config.host}:${config.port}", config.login, config.password, config.verbose)
+      val client = new JmxClient(config.hostPort, config.registryHostPort, config.login, config.password, config.verbose)
       client.execute(config.builder)
     case _ =>
   }
 
 }
 
-class JmxClient(hostport: String, login:Option[String], password: Option[String], verbose: Boolean = false) {
+class JmxClient(hostPort: String, registryHostPort: Option[String], login:Option[String], password: Option[String], verbose: Boolean = false) {
 
   def execute(): Unit = {
     execute(null, Seq.empty[String]:_*)
   }
 
   def execute(beanname: String, commands: String*): Unit = {
-    val jmxc = jmxConnector(hostport, login, password)
+    val jmxc = jmxConnector(hostPort, login, password)
     try {
       doBeans(jmxc.getMBeanServerConnection, beanname.asObjectName, commands.map(Command(_, None)))
     }
@@ -102,8 +104,8 @@ class JmxClient(hostport: String, login:Option[String], password: Option[String]
   }
 
   def execute(builder: CommandBuilder): Unit = {
-    if (verbose) println(s"> jmx connector to '$hostport' login=$login password=$password")
-    val jmxc = jmxConnector(hostport, login, password)
+    if (verbose) println(s"> jmx connector to '$hostPort' login=$login password=$password")
+    val jmxc = jmxConnector(hostPort, login, password)
     try {
       if (verbose) println(s"> commands list\n${builder.toString}")
 
@@ -164,6 +166,8 @@ class JmxClient(hostport: String, login:Option[String], password: Option[String]
               printSimple(header, cmd.displayName, f"${n.doubleValue}%.2f")
             case n: java.lang.Float =>
               printSimple(header, cmd.displayName, f"${n.floatValue}%.2f")
+            case n: Array[_] =>
+              printSimple(header, cmd.displayName, f"${n.map(_.toString).mkString("[", ", ", "]")}")
             case n =>
               printSimple(header, cmd.displayName, n.toString)
           }
@@ -351,7 +355,12 @@ class JmxClient(hostport: String, login:Option[String], password: Option[String]
   }
 
   private def jmxConnector(hostport: String, login: Option[String], password: Option[String]): JMXConnector = {
-    val rmiurl = new JMXServiceURL(s"service:jmx:rmi://$hostport/jndi/rmi://$hostport/jmxrmi")
+    val rmiServer = s"rmi://$hostport/jmxrmi"  // -Dcom.sun.rmi.remote...에서 지정한 것은 rmiserver 이고
+    val rmiRegistry = if (registryHostPort.isDefined) s"rmi://${registryHostPort.get}/jndi" else s"rmi://$hostport/jndi"
+
+    val serviceURL = s"service:jmx:$rmiRegistry/$rmiServer"
+    if(verbose) println(s"> serviceURL: $serviceURL")
+    val rmiurl = new JMXServiceURL(serviceURL)
     val cred = Map(JMXConnector.CREDENTIALS -> Array(login.getOrElse(null), password.getOrElse(null)))
     JMXConnectorFactory.connect(rmiurl, cred.asJava)
   }

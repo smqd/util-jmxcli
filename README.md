@@ -27,15 +27,15 @@ $ sbt assembly
 ### Run JmxClient.jar
 
 ```bash
-$ java -jar JmxClient-vX.Y.jar -h localhost -p 9010 <options...>
+$ java -jar JmxClient-vX.Y.jar -s localhost:9010 <options...>
 ```
 
 ### Retrieve available JMX Beans list
 
-`-h` is Jmx remote host address, `-p` is port
+`-s` is optio for jmx remote host address and port
 
 ```bash
-$ java -jar JmxClient-vX.Y.Z.jar -h localhost -p 9010
+$ java -jar JmxClient-vX.Y.Z.jar -s localhost:9010
 
 [0] JMImplementation:type=MBeanServerDelegate
 [1] com.sun.management:type=DiagnosticCommand
@@ -66,7 +66,7 @@ $ java -jar JmxClient-vX.Y.Z.jar -h localhost -p 9010
 Use command to specify the MXBean
 
 ```bash
-$ java -jar JmxClient-vX.Y.Z.jar -h localhost -p 9010 "java.lang:type=Memory"
+$ java -jar JmxClient-vX.Y.Z.jar -s localhost:9010 "java.lang:type=Memory"
 
 java.lang:type=Memory  Attribute  ObjectPendingFinalizationCount : int
 java.lang:type=Memory  Attribute  HeapMemoryUsage : javax.management.openmbean.CompositeData
@@ -90,7 +90,7 @@ A command consist of three parts `bean-name`/`feature`/`param` that are separate
 - `param` optional, it works differently depends on the feature 
 
 ```bash
-$ java -jar JmxClient-vX.Y.Z.jar -h localhost -p 9010 "java.lang:type=Memory/HeapMemoryUsage/heap"
+$ java -jar JmxClient-vX.Y.Z.jar -s localhost:9010 "java.lang:type=Memory/HeapMemoryUsage/heap"
 
 java.lang:name=PS Old Gen,type=MemoryPool PeakUsage
     peak.max: 2863661056
@@ -102,7 +102,7 @@ java.lang:name=PS Old Gen,type=MemoryPool PeakUsage
 print value only without "name:" prefix
 
 ```bash
-$ java -jar JmxClient-vX.Y.Z.jar -h localhost -p 9010 "java.lang:type=OperatingSystem/ProcessCpuLoad/-"
+$ java -jar JmxClient-vX.Y.Z.jar -s localhost:9010 "java.lang:type=OperatingSystem/ProcessCpuLoad/-"
 java.lang:type=OperatingSystem ProcessCpuLoad
     0.00
 ```
@@ -111,7 +111,7 @@ java.lang:type=OperatingSystem ProcessCpuLoad
 Use multiple commands
 
 ```bash
-$ java -jar JmxClient-vX.Y.Z.jar -h localhost -p 9010 \ 
+$ java -jar JmxClient-vX.Y.Z.jar -s localhost:9010 \ 
   "java.lang:type=Memory/HeapMemoryUsage/heap" \
   "java.lang:type=MemoryPool,name=PS Old Gen/PeakUsage/peak" \
   "java.lang:type=Threading/ThreadCount"
@@ -143,7 +143,7 @@ host=`hostname`
 jmxhost=127.0.0.1
 jmxport=9010
 
-jmxcli="java -jar target/scala-2.12/JmxClient-v0.2.jar -h $jmxhost -p $jmxport"
+jmxcli="java -jar target/scala-2.12/JmxClient-v0.2.jar -s $jmxhost:$jmxport"
 
 cmds=(
   "java.lang:type=Memory/HeapMemoryUsage/heap"

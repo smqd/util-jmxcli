@@ -4,7 +4,7 @@ host=`hostname`
 jmxhost=127.0.0.1
 jmxport=9010
 
-jmxcli="java -jar target/scala-2.12/JmxClient-v0.2.jar -h $jmxhost -p $jmxport"
+jmxcli="java -jar target/scala-2.12/JmxClient-v0.2.jar -s $jmxhost:$jmxport"
 
 cmds=(
   "java.lang:type=Memory/HeapMemoryUsage/heap"

@@ -24,7 +24,7 @@ class JmxClientTest extends FlatSpec with BeforeAndAfterAll {
     val hostport: String = "127.0.0.1:9011"
     val login: Option[String] = None
     val password: Option[String] = None
-    jmx = new JmxClient(hostport, login, password)
+    jmx = new JmxClient(hostport, None, login, password)
   }
 
   override def afterAll(): Unit = {
