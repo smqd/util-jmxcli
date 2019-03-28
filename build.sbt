@@ -30,7 +30,7 @@ headerMappings := headerMappings.value + (HeaderFileType.scala -> HeaderCommentS
 
 headerMappings := headerMappings.value + (HeaderFileType.conf -> HeaderCommentStyle.hashLineComment)
 
-fork in run := true
+fork in Test := true
 
 javaOptions in Test ++= Seq(
   "-Dcom.sun.management.jmxremote",
