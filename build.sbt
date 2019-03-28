@@ -1,5 +1,5 @@
 
-val versionString = "0.3"
+val versionString = "0.4-SNAPSHOT"
 val jarNameString = s"JmxClient-v$versionString.jar"
 
 name := "JmxClient"
