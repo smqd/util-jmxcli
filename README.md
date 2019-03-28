@@ -1,8 +1,8 @@
 # JmxCli
 
-[![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
+[![License](https://img.shields.io/github/license/smqd/util-jmxcli.svg?style=popout)](https://github.com/smqd/util-jmxcli/blob/develop/LICENSE)
 [![Build Status](https://travis-ci.org/smqd/util-jmxcli.svg?branch=master)](https://travis-ci.org/smqd/util-jmxcli)
-[![Github Releases](https://img.shields.io/github/downloads/smqd/util-jmxcli/latest/total.svg)](https://github.com/smqd/util-jmxcli/releases/latest)
+[![Github Releases](https://img.shields.io/github/release/smqd/util-jmxcli.svg)](https://github.com/smqd/util-jmxcli/releases/latest)
 
 JmxCli is command line JMX remote client.
 
