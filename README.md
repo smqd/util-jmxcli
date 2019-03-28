@@ -17,22 +17,25 @@ $ curl -L -O https://github.com/smqd/util-jmxcli/releases/download/v0.3/JmxClien
 ### build from source
 
 ```bash
+$ git clone git@github.com:smqd/util-jmxcli.git
+$ cd util-jmxcli
 $ sbt assembly
+$ cp target/scala-2.12/JmxClient-v0.4-SNAPSHOT.jar <install_dir>
 ```
 
-#### Library Dependecies
+**Library Dependecies**
 
 - scopt: https://github.com/scopt/scopt
 
 ### Run JmxClient.jar
 
 ```bash
-$ java -jar JmxClient-vX.Y.jar -s localhost:9010 <options...>
+$ java -jar JmxClient-vX.Y.jar -s localhost:9010
 ```
 
-### Retrieve available JMX Beans list
+- `-s` is option for jmx remote host address and port
 
-`-s` is optio for jmx remote host address and port
+This command retrieves list of MXBeans from the remote jmx
 
 ```bash
 $ java -jar JmxClient-vX.Y.Z.jar -s localhost:9010
@@ -41,27 +44,14 @@ $ java -jar JmxClient-vX.Y.Z.jar -s localhost:9010
 [1] com.sun.management:type=DiagnosticCommand
 [2] com.sun.management:type=HotSpotDiagnostic
 [3] java.lang:type=ClassLoading
-[4] java.lang:type=Compilation
-[5] java.lang:name=PS MarkSweep,type=GarbageCollector
-[6] java.lang:name=PS Scavenge,type=GarbageCollector
-[7] java.lang:type=Memory
-[8] java.lang:name=CodeCacheManager,type=MemoryManager
-[9] java.lang:name=Metaspace Manager,type=MemoryManager
-[10] java.lang:name=Code Cache,type=MemoryPool
-[11] java.lang:name=Compressed Class Space,type=MemoryPool
-[12] java.lang:name=Metaspace,type=MemoryPool
-[13] java.lang:name=PS Eden Space,type=MemoryPool
-[14] java.lang:name=PS Old Gen,type=MemoryPool
-[15] java.lang:name=PS Survivor Space,type=MemoryPool
-[16] java.lang:type=OperatingSystem
-[17] java.lang:type=Runtime
+               ......
 [18] java.lang:type=Threading
 [19] java.nio:name=direct,type=BufferPool
 [20] java.nio:name=mapped,type=BufferPool
 [21] java.util.logging:type=Logging
 ```
 
-### Retrieve list of attributes and operations of a specified MXBean
+### Retrieve list of attributes and operations of a specific MXBean
 
 Use command to specify the MXBean
 
@@ -80,13 +70,14 @@ java.lang:type=Memory  Operation  gc() : void
 
 A command consist of three parts `bean-name`/`feature`/`param` that are separated by `/`.
 - `bean-name` is mandatory, it specify the target MXBean
-- `feature` optional, specify attribute or operation
-       if feature is attribute name, it will retrieve the value of the attribute
-          param is used as alias for printing instead of the real attribute name
-          if alias is '-', no prefix and name is appended, print value only without name
-       if feature is operation name, it will invoke the operation
-          param is comma-separated list of arguments for the operation
-       if feature is not specified, JmxClient will display all attributes and operations   
+- `feature` optional, specify name of attribute or operation  
+   If the feature is attribute name, it will retrieve the value of the attribute.
+   In this case, param is used as alias to print the name of the value instead of the real attribute name.  
+   If alias is '-', that means no alias or name is assigned, then it prints only value without name.  
+   If the feature is operation name, it will invoke the operation. 
+   In this case,  param is comma-separated list of arguments for the operation.  
+   If feature is not specified, it will display all attributes and operations of the MXBean.
+     
 - `param` optional, it works differently depends on the feature 
 
 ```bash
