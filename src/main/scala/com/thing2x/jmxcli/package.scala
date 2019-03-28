@@ -97,10 +97,13 @@ package object jmxcli {
             rt :+= buf.substring(0, idx)
             buf = buf.substring(idx+separator.length)
           }
+          else {
+            rt :+= buf
+          }
         } while (idx >= 0)
         rt.toArray
       }
-      println(s"=============++> ${tok.mkString(" ")}")
+
       if (tok.length == 3)
         addCommand(tok(0), tok(1), tok(2))
       else if (tok.length == 2)

@@ -51,7 +51,7 @@ object JmxClient extends App {
         .text("jmx authentication user"),
       opt[String]('p', "password").valueName("<phrase>").action( (x,c) => c.copy(password = Some(x)))
         .text("jmx authentication credential"),
-      opt[String]('e', "sep")
+      opt[String]('e', "sep").action( (x,c) => c.copy(commandSeparator = x))
         .text("specify command separator (default is /)"),
       arg[String]("commands ...").unbounded().optional().action{ (x,c) => c.copy(commands = c.commands :+ x) }
         .text("<b1/f1/p1> <b2/f2/p2> <b3/f3> ..."),
