@@ -35,23 +35,40 @@ object JmxClient extends App {
     import builder._
     OParser.sequence(
       programName(s"java -jar ${Versions.jmxJarName}"),
-      head(""),
-      version(Versions.jmxClientVersion),
+      head(s"JmxClient ${Versions.jmxClientVersion}"),
       help("help").text("print this messages"),
-      opt[String]('h', "host").valueName("<host>").action( (x,c) => c.copy(host = x))
-        .text("(default localhost)"),
-      opt[Int]('p', "port").valueName("<port>").action( (x,c) => c.copy(port = x))
-        .text("(default 9010)"),
+      version("version").text("print current version"),
+      opt[String]('h', "host").required().valueName("<host>").action( (x,c) => c.copy(host = x)),
+      opt[Int]('p', "port").required().valueName("<port>").action( (x,c) => c.copy(port = x)),
       opt[String]('u', "user").valueName("<username>").action( (x,c) => c.copy(login = Some(x)))
         .text("jmx authentication user"),
       opt[String]('P', "password").valueName("<phrase>").action( (x,c) => c.copy(password = Some(x))).
         text("jmx authentication credential"),
-      opt[String]('b', "bean").valueName("<bean/cmd[/alias]>").unbounded().action{ (x,c) => c.builder.addCommandFromString(x); c }
-        .text("-b <b1/c1/a1> -b <b2/c2/a2> -b <b3/c3> ..."),
+      arg[String]("<commands> ...").unbounded().optional().action{ (x,c) => c.builder.addCommandFromString(x); c }
+        .text("<b1/f1/p1> <b2/f2/p2> <b3/f3> ..."),
       note(
         """
-          | Ex) -b java.lang:type=Memory/HeapMemoryUsage/mem
-          | Ex) -b "java.lang:type=MemoryPool,name=PS Old Gen/PeakUsage/peak" -b java.lang:type=Threading/ThreadCount
+          |    A command is consist of three parts as bean-name/feature/param that are separated by /.
+          |    - bean-name : mandatory, it specify the target MXBean by name
+          |    - feature   : optional, specify attribute or operation
+          |                  if feature is attribute name, it will retrieve the value of the attribute
+          |                     param is used as alias instead of the real attribute name
+          |                  if feature is operation name, it will invoke the operation
+          |                     param is comma-separated list of arguments for the operation
+          |                  if feature is not specified, JmxClient will display all attributes and operations
+          |    - param     : optional, it works differently depends on the feature
+          |    ex)
+          |      . retrieve thread count
+          |        java.lang:type=Threading/ThreadCount
+          |
+          |      . retrieve memory usage, replace the attribute name with alias 'mem'
+          |        java.lang:type=Memory/HeapMemoryUsage/mem
+          |
+          |      . use quotation mark to encapsulate space character
+          |        "java.lang:type=MemoryPool,name=PS Old Gen/PeakUsage/peak"
+          |
+          |      . invoke MXBean's method, this example will invoke bean.setValue(param1, param2)
+          |        com.example:name=SomeMXBean/setValue/param1,param2
         """.stripMargin)
     )
   }

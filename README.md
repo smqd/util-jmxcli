@@ -55,10 +55,10 @@ $ java -jar JmxClient-vX.Y.Z.jar -h localhost -p 9010
 
 ### Retrieve list of attributes and operations of a specified MXBean
 
-Use `-b` option to specify the MXBean
+Use command to specify the MXBean
 
 ```bash
-$ java -jar JmxClient-vX.Y.Z.jar -h localhost -p 9010 -b "java.lang:type=Memory"
+$ java -jar JmxClient-vX.Y.Z.jar -h localhost -p 9010 "java.lang:type=Memory"
 
 java.lang:type=Memory  Attribute  ObjectPendingFinalizationCount : int
 java.lang:type=Memory  Attribute  HeapMemoryUsage : javax.management.openmbean.CompositeData
@@ -70,13 +70,18 @@ java.lang:type=Memory  Operation  gc() : void
 
 ### Retrieve an attribute
 
-The value of `-b` can consist of three parts `bean-name`/`attribute-name`/`alias` that are separated by `/`.
+A command consist of three parts `bean-name`/`feature`/`param` that are separated by `/`.
 - `bean-name` is mandatory, it specify the target MXBean
-- `attribute-name` is optional; if it is not specified JmxClient retrieves all attributes and operations of the MXBean
-- `alias` is (optional) alias of the attribute name; this is usefull when you use JmxClient with `grep` in shell script 
+- `feature` optional, specify attribute or operation
+       if feature is attribute name, it will retrieve the value of the attribute
+          param is used as alias instead of the real attribute name
+       if feature is operation name, it will invoke the operation
+          param is comma-separated list of arguments for the operation
+       if feature is not specified, JmxClient will display all attributes and operations   
+- `param` optional, it works differently depends on the feature 
 
 ```bash
-$ java -jar JmxClient-vX.Y.Z.jar -h localhost -p 9010 -b "java.lang:type=Memory/HeapMemoryUsage/heap"
+$ java -jar JmxClient-vX.Y.Z.jar -h localhost -p 9010 "java.lang:type=Memory/HeapMemoryUsage/heap"
 
 java.lang:name=PS Old Gen,type=MemoryPool PeakUsage
     peak.max: 2863661056
@@ -87,13 +92,13 @@ java.lang:name=PS Old Gen,type=MemoryPool PeakUsage
 
 ### Retrieve multiple attributes
 
-Use multiple `-b` options
+Use multiple commands
 
 ```bash
 $ java -jar JmxClient-vX.Y.Z.jar -h localhost -p 9010 \ 
-  -b "java.lang:type=Memory/HeapMemoryUsage/heap" \
-  -b "java.lang:type=MemoryPool,name=PS Old Gen/PeakUsage/peak" \
-  -b "java.lang:type=Threading/ThreadCount"
+  "java.lang:type=Memory/HeapMemoryUsage/heap" \
+  "java.lang:type=MemoryPool,name=PS Old Gen/PeakUsage/peak" \
+  "java.lang:type=Threading/ThreadCount"
 
 java.lang:name=PS Old Gen,type=MemoryPool PeakUsage
     peak.max: 2863661056
