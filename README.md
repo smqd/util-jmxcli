@@ -10,16 +10,24 @@ JmxCli is command line JMX remote client.
 
 JmxCli is distributed as a fat jar file. so just download the binary file from the releases, and run it as it is.
 
-or build from source
+```bash
+$ curl -L -O https://github.com/smqd/util-jmxcli/releases/download/v0.2/JmxClient-v0.2.jar
+```
+
+### build from source
 
 ```bash
 $ sbt assembly
 ```
 
-Run JmxClient.jar
+#### Library Dependecies
+
+- scopt: https://github.com/scopt/scopt
+
+### Run JmxClient.jar
 
 ```bash
-$ java -jar JmxClient-vX.Y.Z.jar -h localhost -p 9010 <options...>
+$ java -jar JmxClient-vX.Y.jar -h localhost -p 9010 <options...>
 ```
 
 ### Retrieve available JMX Beans list
@@ -113,3 +121,46 @@ java.lang:type=Memory HeapMemoryUsage
 java.lang:type=Threading ThreadCount
     ThreadCount: 16
 ``` 
+
+## Use JmxClient with Telegraf
+
+This example shows how to collect JVM metrics with JmxClient from JMX remote. 
+This shell script prints out the JVM's metrics in Influxdb line format, 
+so that Telegraf use it as influxdb input.
+
+```bash
+#!/usr/bin/env bash
+
+host=`hostname`
+jmxhost=127.0.0.1
+jmxport=9010
+
+jmxcli="java -jar target/scala-2.12/JmxClient-v0.2.jar -h $jmxhost -p $jmxport"
+
+cmds=(
+  "java.lang:type=Memory/HeapMemoryUsage/heap"
+  "java.lang:type=MemoryPool,name=PS Old Gen/Usage/old"
+  "java.lang:type=MemoryPool,name=PS Eden Space/Usage/eden"
+  "java.lang:type=MemoryPool,name=PS Survivor Space/Usage/survivor"
+  "java.lang:type=Threading/ThreadCount/thread.count"
+  "java.lang:type=OperatingSystem/OpenFileDescriptorCount/fd.count"
+)
+
+result=`echo $(printf "'%s' " "${cmds[@]}") | xargs $jmxcli`
+
+heap=`echo "$result" | grep heap.max | sed -e 's/^[ \t]*//' | cut -f2 -d" "`
+used=`echo "$result" | grep heap.used | sed -e 's/^[ \t]*//' | cut -f2 -d" "`
+eden=`echo "$result" | grep eden.used | sed -e 's/^[ \t]*//' | cut -f2 -d" "`
+old=`echo "$result" | grep old.used | sed -e 's/^[ \t]*//' | cut -f2 -d" "`
+survivor=`echo "$result" | grep survivor.used | sed -e 's/^[ \t]*//' | cut -f2 -d" "`
+fdcount=`echo "$result" | grep fd.count | sed -e 's/^[ \t]*//' | cut -f2 -d" "`
+thread=`echo "$result" | grep thread.count | sed -e 's/^[ \t]*//' | cut -f2 -d" "`
+
+echo "jvmstat,host=${host} jvm.heap.total=$heap,jvm.heap.used=$used,jvm.heap.old_gen=$old,jvm.heap.eden_space=$eden,jvm.heap.survivor_space=$survivor,jvm.thread.count=$thread,jvm.fd.count=$fdcount"
+``` 
+
+
+
+```
+jvm,host=localmachine jvm.heap.total=11453595648,jvm.heap.used=196356328,jvm.heap.old_gen=20863384,jvm.heap.eden_space=173541272,jvm.heap.survivor_space=1951672,jvm.thread.count=,jvm.fd.count=113
+```

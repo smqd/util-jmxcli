@@ -93,6 +93,10 @@ package object jmxcli {
         addCommand(tok(0))
       this
     }
+
+    override def toString: String = {
+      cmds.toMap.map{ case(bean, ca) => s"$bean: $ca"}.mkString("\n")
+    }
   }
 
   private[jmxcli] case class Command(cmd: String, alias: Option[String]) {

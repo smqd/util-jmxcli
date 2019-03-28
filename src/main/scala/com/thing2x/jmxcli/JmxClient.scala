@@ -26,6 +26,7 @@ object JmxClient extends App {
 
   case class Config(host: String = "localhost",
                     port: Int = 9010,
+                    verbose: Boolean = false,
                     login: Option[String] = None,
                     password: Option[String] = None,
                     builder: CommandBuilder = CommandBuilder.newBuilder)
@@ -38,6 +39,7 @@ object JmxClient extends App {
       head(s"JmxClient ${Versions.jmxClientVersion}"),
       help("help").text("print this messages"),
       version("version").text("print current version"),
+      opt[Unit]('v', "verbose").action( (_, c) => c.copy(verbose = true)),
       opt[String]('h', "host").required().valueName("<host>").action( (x,c) => c.copy(host = x)),
       opt[Int]('p', "port").required().valueName("<port>").action( (x,c) => c.copy(port = x)),
       opt[String]('u', "user").valueName("<username>").action( (x,c) => c.copy(login = Some(x)))
@@ -75,14 +77,14 @@ object JmxClient extends App {
 
   OParser.parse(parser, args, Config()) match {
     case Some(config) =>
-      val client = new JmxClient(s"${config.host}:${config.port}", config.login, config.password)
+      val client = new JmxClient(s"${config.host}:${config.port}", config.login, config.password, config.verbose)
       client.execute(config.builder)
     case _ =>
   }
 
 }
 
-class JmxClient(hostport: String, login:Option[String], password: Option[String]) {
+class JmxClient(hostport: String, login:Option[String], password: Option[String], verbose: Boolean = false) {
 
   def execute(): Unit = {
     execute(null, Seq.empty[String]:_*)
@@ -99,8 +101,11 @@ class JmxClient(hostport: String, login:Option[String], password: Option[String]
   }
 
   def execute(builder: CommandBuilder): Unit = {
+    if (verbose) println(s"> jmx connector to '$hostport' login=$login password=$password")
     val jmxc = jmxConnector(hostport, login, password)
     try {
+      if (verbose) println(s"> commands list\n${builder.toString}")
+
       val cmds = builder.cmds
 
       if (cmds.isEmpty) {
@@ -108,6 +113,7 @@ class JmxClient(hostport: String, login:Option[String], password: Option[String]
       }
       else {
         cmds.foreach{ case(beanname, commands) =>
+          if (verbose) println(s"> bean: $beanname, commands: $commands")
           doBeans(jmxc.getMBeanServerConnection, beanname.asObjectName, commands)
         }
       }
