@@ -83,8 +83,24 @@ package object jmxcli {
       this
     }
 
-    def addCommandFromString(str: String): CommandBuilder = {
-      val tok = str.split('/')
+    def addCommandFromString(str: String, separator: String): CommandBuilder = {
+      val tok = if (separator.length == 1){
+        str.split(separator.charAt(0))
+      }
+      else {
+        var buf = str
+        var idx = 0
+        var rt: Seq[String] = Seq.empty
+        do {
+          idx = buf.indexOf(separator)
+          if (idx >= 0) {
+            rt :+= buf.substring(0, idx)
+            buf = buf.substring(idx+separator.length)
+          }
+        } while (idx >= 0)
+        rt.toArray
+      }
+      println(s"=============++> ${tok.mkString(" ")}")
       if (tok.length == 3)
         addCommand(tok(0), tok(1), tok(2))
       else if (tok.length == 2)

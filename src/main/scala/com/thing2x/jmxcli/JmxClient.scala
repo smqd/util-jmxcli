@@ -29,7 +29,10 @@ object JmxClient extends App {
                     verbose: Boolean = false,
                     login: Option[String] = None,
                     password: Option[String] = None,
-                    builder: CommandBuilder = CommandBuilder.newBuilder)
+                    commandSeparator: String = "/",
+                    commands: Seq[String] = Seq.empty,
+                    builder: CommandBuilder = CommandBuilder.newBuilder
+                   )
 
   val builder = OParser.builder[Config]
   val parser = {
@@ -46,12 +49,15 @@ object JmxClient extends App {
         .text("rmi registry"),
       opt[String]('u', "user").valueName("<username>").action( (x,c) => c.copy(login = Some(x)))
         .text("jmx authentication user"),
-      opt[String]('p', "password").valueName("<phrase>").action( (x,c) => c.copy(password = Some(x))).
-        text("jmx authentication credential"),
-      arg[String]("commands ...").unbounded().optional().action{ (x,c) => c.builder.addCommandFromString(x); c }
+      opt[String]('p', "password").valueName("<phrase>").action( (x,c) => c.copy(password = Some(x)))
+        .text("jmx authentication credential"),
+      opt[String]('e', "sep")
+        .text("specify command separator (default is /)"),
+      arg[String]("commands ...").unbounded().optional().action{ (x,c) => c.copy(commands = c.commands :+ x) }
         .text("<b1/f1/p1> <b2/f2/p2> <b3/f3> ..."),
       note(
         """    A command is consist of three parts as bean-name/feature/param that are separated by /.
+          |    The separator character(default / ) can be customized using '-t' option
           |    - bean-name : mandatory, it specify the target MXBean by name
           |    - feature   : optional, specify attribute or operation
           |                  if feature is attribute name, it will retrieve the value of the attribute
@@ -74,7 +80,14 @@ object JmxClient extends App {
           |
           |      . invoke MXBean's method, this example will invoke bean.setValue(param1, param2)
           |        com.example:name=SomeMXBean/setValue/param1,param2
-        """.stripMargin)
+          |
+          |      . use -e option to avoid confliction with command that contains '/' character
+          |        -e $$$ "java.lang:type=SomeMXBean,name=my path$$$/disk1/data/path$$$peak"
+        """.stripMargin),
+      checkConfig { c =>
+        c.commands.foreach(c.builder.addCommandFromString(_, c.commandSeparator))
+        success
+      }
     )
   }
 

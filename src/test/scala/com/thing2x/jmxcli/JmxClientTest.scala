@@ -69,7 +69,7 @@ class JmxClientTest extends FlatSpec with BeforeAndAfterAll {
 
   it should "work with command arguments" in {
     val builder = CommandBuilder.newBuilder
-        .addCommandFromString("java.lang:type=Memory/HeapMemoryUsage/mem")
+        .addCommandFromString("java.lang:type=Memory$$$HeapMemoryUsage$$$mem", "$$$")
     jmx.execute(builder)
   }
 }
