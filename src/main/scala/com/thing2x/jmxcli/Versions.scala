@@ -15,7 +15,7 @@
 package com.thing2x.jmxcli
 
 object Versions {
-   val jmxClientVersion = "0.4"
-   val jmxJarName = "JmxClient-v0.4.jar"
+   val jmxClientVersion = "0.5-SNAPSHOT"
+   val jmxJarName = "JmxClient-v0.5-SNAPSHOT.jar"
 }
     
