@@ -11,7 +11,7 @@ JmxCli is command line JMX remote client.
 JmxCli is distributed as a fat jar file. so just download the binary file from the releases, and run it as it is.
 
 ```bash
-$ curl -L -O https://github.com/smqd/util-jmxcli/releases/download/v0.3/JmxClient-v0.3.jar
+$ curl -L -O https://github.com/smqd/util-jmxcli/releases/download/v0.4/JmxClient-v0.4.jar
 ```
 
 ### build from source
@@ -20,7 +20,7 @@ $ curl -L -O https://github.com/smqd/util-jmxcli/releases/download/v0.3/JmxClien
 $ git clone git@github.com:smqd/util-jmxcli.git
 $ cd util-jmxcli
 $ sbt assembly
-$ cp target/scala-2.12/JmxClient-v0.4-SNAPSHOT.jar <install_dir>
+$ cp target/scala-2.12/JmxClient-<version>.jar <install_dir>
 ```
 
 **Library Dependecies**
