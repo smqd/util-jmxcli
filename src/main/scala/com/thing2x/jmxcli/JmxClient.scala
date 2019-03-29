@@ -172,9 +172,11 @@ class JmxClient(hostPort: String, registryHostPort: Option[String], login:Option
               println(header)
               println( resultTabularData("", cmd.displayName, td) )
             case at: MBeanAttributeInfo =>
-              println(s"$header Attribute  ${at.getName} : ${at.getType}")
+              val prefix = if (cmd.alias.isDefined) cmd.alias.get else header
+              println(s"$prefix attribute ${at.getName} : ${at.getType}")
             case op: MBeanOperationInfo =>
-              println(s"$header Operation  ${op.getName}(${op.getSignature.map(p => s"${p.getName}:${p.getType}").mkString(", ")}) : ${op.getReturnType}")
+              val prefix = if (cmd.alias.isDefined) cmd.alias.get else header
+              println(s"$prefix operation ${op.getName}(${op.getSignature.map(p => s"${p.getName}:${p.getType}").mkString(", ")}) : ${op.getReturnType}")
             case n: java.lang.Double =>
               printSimple(header, cmd.displayName, f"${n.doubleValue}%.2f")
             case n: java.lang.Float =>
@@ -182,7 +184,7 @@ class JmxClient(hostPort: String, registryHostPort: Option[String], login:Option
             case n: Array[_] =>
               printSimple(header, cmd.displayName, f"${n.map(_.toString).mkString("[", ", ", "]")}")
             case n =>
-              printSimple(header, cmd.displayName, n.toString)
+              printSimple(header, cmd.displayName, if (n == null) "<null>" else n.toString)
           }
         }
       }
@@ -223,20 +225,23 @@ class JmxClient(hostPort: String, registryHostPort: Option[String], login:Option
   }
 
   private def doBean(mbsc: MBeanServerConnection, instance: ObjectInstance, commands: Seq[Command]): Seq[CommandResult] = {
-    if (commands.isEmpty || commands.exists(_.cmd == "")) {
-      Seq(listOptions(mbsc, instance))
+    if (commands.isEmpty) {
+      Seq(listOptions(mbsc, instance, Command.empty))
+    }
+    else if (commands.exists(_.cmd == "")) {
+      Seq(listOptions(mbsc, instance, commands.find(_.cmd == "").get))
     }
     else {
       commands.map( doSubCommand(mbsc, instance, _ ) )
     }
   }
 
-  private def listOptions(mbsc: MBeanServerConnection, instance: ObjectInstance): CommandResult = {
+  private def listOptions(mbsc: MBeanServerConnection, instance: ObjectInstance, command: Command): CommandResult = {
     val info = mbsc.getMBeanInfo(instance.getObjectName)
     val attrs = info.getAttributes
     val opers = info.getOperations
 
-    CommandResult(instance, Command.empty, attrs.toSeq ++ opers.toSeq)
+    CommandResult(instance, command, attrs.toSeq ++ opers.toSeq)
   }
 
   private def doSubCommand(mbsc: MBeanServerConnection, instance: ObjectInstance, command: Command): CommandResult = {

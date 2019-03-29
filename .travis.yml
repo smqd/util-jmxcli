@@ -10,7 +10,7 @@ cache:
 before_cache:
 - find $HOME/.ivy2/cache -name "ivydata-*.properties" -print -delete
 - find $HOME/.sbt -name "*.lock" -print -delete
-script: sbt ++$TRAVIS_SCALA_VERSION assembly
+script: sbt ++$TRAVIS_SCALA_VERSION test assembly
 deploy:
   provider: releases
   api_key:

@@ -74,11 +74,12 @@ package object jmxcli {
     }
 
     def addCommand(beanname: String, cmd: String, alias: Option[String]): CommandBuilder = {
+      val translatedCmd = if (cmd == "-") "" else cmd
       if (cmds.contains(beanname)) {
-        cmds(beanname) :+= Command(cmd, alias)
+        cmds(beanname) :+= Command(translatedCmd, alias)
       }
       else {
-        cmds.put(beanname, Seq(Command(cmd, alias)))
+        cmds.put(beanname, Seq(Command(translatedCmd, alias)))
       }
       this
     }
@@ -94,13 +95,13 @@ package object jmxcli {
         do {
           idx = buf.indexOf(separator)
           if (idx >= 0) {
-            rt :+= buf.substring(0, idx)
+            rt :+= buf.substring(0, idx).trim
             buf = buf.substring(idx+separator.length)
           }
           else {
-            rt :+= buf
+            rt :+= buf.trim
           }
-        } while (idx >= 0)
+        } while (idx >= 0 && rt.size <= 3)
         rt.toArray
       }
 
@@ -119,14 +120,19 @@ package object jmxcli {
   }
 
   private[jmxcli] case class Command(cmd: String, alias: Option[String]) {
-    def displayName: String = if(alias.isDefined){
-      alias.get match {
-        case "-" => ""
-        case s => s
+    def displayName: String = {
+      def useAlias: String = if (alias.get == "-") "" else alias.get
+      if(alias.isDefined) {
+        useAlias
       }
-    }
-    else{
-      cmd
+      else {
+        if (cmd == "-") {
+          if (alias.isDefined) useAlias else  ""
+        }
+        else {
+          cmd
+        }
+      }
     }
   }
 

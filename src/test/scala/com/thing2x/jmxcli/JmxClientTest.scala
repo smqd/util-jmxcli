@@ -14,6 +14,10 @@
 
 package com.thing2x.jmxcli
 
+import java.lang.management.ManagementFactory
+
+import com.thing2x.jmxcli.example.Hello
+import javax.management.ObjectName
 import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 
 class JmxClientTest extends FlatSpec with BeforeAndAfterAll {
@@ -21,6 +25,8 @@ class JmxClientTest extends FlatSpec with BeforeAndAfterAll {
   private var jmx: JmxClient = _
 
   override def beforeAll(): Unit = {
+    val mbs = ManagementFactory.getPlatformMBeanServer
+    mbs.registerMBean(new Hello, new ObjectName("com.thing2x.jmxcli.example:type=Hello"))
     val hostport: String = "127.0.0.1:9011"
     val login: Option[String] = None
     val password: Option[String] = None
@@ -69,7 +75,16 @@ class JmxClientTest extends FlatSpec with BeforeAndAfterAll {
 
   it should "work with command arguments" in {
     val builder = CommandBuilder.newBuilder
-        .addCommandFromString("java.lang:type=Memory$$$HeapMemoryUsage$$$mem", "$$$")
+      .addCommandFromString("java.lang:type=Memory$$$HeapMemoryUsage$$$mem", "$$$")
+    jmx.execute(builder)
+  }
+
+  it should "work with custom mbean" in {
+    val builder = CommandBuilder.newBuilder
+      //.addCommand("com.thing2x.jmxcli.example:type=Hello", "Address")
+      .addCommand("com.thing2x.jmxcli.example:type=Hello", "sayHello")
+      //.addCommand("com.thing2x.jmxcli.example:type=Hello", "sayHello", "Robert")
+
     jmx.execute(builder)
   }
 }
