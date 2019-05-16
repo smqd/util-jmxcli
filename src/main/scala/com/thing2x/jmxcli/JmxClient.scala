@@ -27,6 +27,7 @@ object JmxClient extends App {
   case class Config(hostPort: String = "localhost:9010",
                     registryHostPort: Option[String] = None,
                     verbose: Boolean = false,
+                    silent: Boolean = false,
                     login: Option[String] = None,
                     password: Option[String] = None,
                     commandSeparator: String = "/",
@@ -43,6 +44,8 @@ object JmxClient extends App {
       help("help").text("print this messages"),
       version("version").text("print current version"),
       opt[Unit]('v', "verbose").action( (_, c) => c.copy(verbose = true)),
+      opt[Unit]('x', "no-exception").action( (_, c) => c.copy(silent = true))
+        .text("no output on exception"),
       opt[String]('s', "server").required().valueName("host:port").action( (x,c) => c.copy(hostPort = x))
         .text("jmx server"),
       opt[String]('r', "rmi").valueName("host:port").action( (x,c) => c.copy(registryHostPort = Some(x)))
@@ -93,14 +96,14 @@ object JmxClient extends App {
 
   OParser.parse(parser, args, Config()) match {
     case Some(config) =>
-      val client = new JmxClient(config.hostPort, config.registryHostPort, config.login, config.password, config.verbose)
+      val client = new JmxClient(config.hostPort, config.registryHostPort, config.login, config.password, config.verbose, config.silent)
       client.execute(config.builder)
     case _ =>
   }
 
 }
 
-class JmxClient(hostPort: String, registryHostPort: Option[String], login:Option[String], password: Option[String], verbose: Boolean = false) {
+class JmxClient(hostPort: String, registryHostPort: Option[String], login:Option[String], password: Option[String], verbose: Boolean = false, silent: Boolean = false) {
 
   def execute(): Unit = {
     execute(null, Seq.empty[String]:_*)
@@ -133,6 +136,10 @@ class JmxClient(hostPort: String, registryHostPort: Option[String], login:Option
           doBeans(jmxc.getMBeanServerConnection, beanname.asObjectName, commands)
         }
       }
+    }
+    catch {
+      case e: Throwable =>
+        if(!silent) e.printStackTrace()
     }
     finally {
       jmxc.close()
